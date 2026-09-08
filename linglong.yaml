@@ -1,0 +1,63 @@
+version: "1"
+
+package:
+  id: net.sourceforge.xournal
+  name: xournal
+  version: 0.4.8.2016
+  kind: app
+  description: |
+    Xournal is a GTK+ application for notetaking, sketching and
+    keeping a journal using a stylus. It can also be used to add
+    annotations to PDF files.
+
+command:
+  - /opt/apps/net.sourceforge.xournal/files/bin/xournal
+
+base: org.deepin.base/25.2.2
+
+sources:
+  - kind: archive
+    url: https://share.cicd.getdeepin.org/ziggy-pool/linyaps-apps-packaging-CI/25M8.top500-init.stage-1.sysRepo/xournal_0.4.8.2016.orig.tar.gz
+    digest: 1d6b2609b1e3b2873332710e4b9fa6db676b3c3983fc46cb717bf4d1955c754e
+    name: xournal
+  - kind: file
+    url: https://share.cicd.getdeepin.org/ziggy-pool/linyaps-apps-packaging-CI/25M8.top500-init.stage-1.sysRepo/xournal_0.4.8.2016-9.debian.tar.xz
+    digest: c7f58184fda7158102a6272ea22b084bc98c1d2941062f0ebd446d98daa3aa6d
+    name: xournal-debian
+
+build: |
+  set -e
+  cd /project/linglong/sources/xournal/xournal-0.4.8.2016
+
+  # Apply debian patches
+  mkdir -p debian
+  tar -xf /project/linglong/sources/xournal-debian -C debian
+  for p in $(cat debian/patches/series); do
+    patch -p1 < debian/patches/${p}
+  done
+
+  # Build with autotools
+  ./autogen.sh
+  CFLAGS="-O2 -g" ./configure --prefix=${PREFIX}
+  make -j$(nproc)
+  make install
+
+buildext:
+  apt:
+    build_depends:
+      - build-essential
+      - autoconf
+      - automake
+      - autopoint
+      - gettext
+      - libtool
+      - pkg-config
+      - libgtk2.0-dev
+      - libgnomecanvas2-dev
+      - libpoppler-glib-dev
+      - intltool
+    depends:
+      - libgtk2.0-0
+      - libgnomecanvas2-0
+      - libpoppler-glib8
+      - ghostscript
